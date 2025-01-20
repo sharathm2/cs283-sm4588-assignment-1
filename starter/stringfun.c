@@ -16,8 +16,34 @@ int  count_words(char *, int, int);
 
 
 int setup_buff(char *buff, char *user_str, int len){
-    //TODO: #4:  Implement the setup buff as per the directions
-    return 0; //for now just so the code compiles. 
+    char *src = user_str;
+    char *dst = buff;
+    int user_str_len = 0;
+    int space_added = 0;
+
+    while (*src != '\0' && user_str_len < len) {
+        if (*src != ' ' && *src != '\t') {
+            *dst++ = *src;
+            user_str_len++;
+            space_added = 0;
+        } else if (!space_added) {
+            *dst++ = ' ';
+            user_str_len++;
+            space_added = 1;
+        }
+        src++;
+    }
+
+    if (*src != '\0') {
+        return -1; // User supplied string is too large
+    }
+
+    while (user_str_len < len) {
+        *dst++ = '.';
+        user_str_len++;
+    }
+
+    return user_str_len;
 }
 
 void print_buff(char *buff, int len){
@@ -34,8 +60,21 @@ void usage(char *exename){
 }
 
 int count_words(char *buff, int len, int str_len){
-    //YOU MUST IMPLEMENT
-    return 0;
+    int word_count = 0;
+    int in_word = 0;
+
+    for (int i = 0; i < str_len; i++) {
+        if (*(buff + i) != ' ') {
+            if (!in_word) {
+                word_count++;
+                in_word = 1;
+            }
+        } else {
+            in_word = 0;
+        }
+    }
+
+    return word_count;
 }
 
 //ADD OTHER HELPER FUNCTIONS HERE FOR OTHER REQUIRED PROGRAM OPTIONS
@@ -78,7 +117,11 @@ int main(int argc, char *argv[]){
     //          handle error if malloc fails by exiting with a 
     //          return code of 99
     // CODE GOES HERE FOR #3
-
+    buff = (char *)malloc(BUFFER_SZ * sizeof(char));
+    if (buff == NULL) {
+        printf("Error: Memory allocation failed\n");
+        exit(99);
+    }
 
     user_str_len = setup_buff(buff, input_string, BUFFER_SZ);     //see todos
     if (user_str_len < 0){
@@ -96,6 +139,52 @@ int main(int argc, char *argv[]){
             printf("Word Count: %d\n", rc);
             break;
 
+        case 'r': {
+            char *start = buff;
+            char *end = buff + user_str_len - 1;
+            while (start < end) {
+                char temp = *start;
+                *start++ = *end;
+                *end-- = temp;
+            }
+            printf("Reversed String: ");
+            for (int i = 0; i < user_str_len; i++) {
+                putchar(*(buff + i));
+            }
+            putchar('\n');
+            break;
+        }
+
+        case 'w': {
+            printf("Word Print\n----------\n");
+            int word_index = 1;
+            int char_count = 0;
+            char *start = buff;
+
+            for (int i = 0; i < user_str_len; i++) {
+                if (*(buff + i) != ' ') {
+                    char_count++;
+                } else if (char_count > 0) {
+                    printf("%d. ", word_index++);
+                    for (int j = 0; j < char_count; j++) {
+                        putchar(*(start + j));
+                    }
+                    printf(" (%d)\n", char_count);
+                    char_count = 0;
+                    start = buff + i + 1;
+                }
+            }
+
+            if (char_count > 0) {
+                printf("%d. ", word_index++);
+                for (int j = 0; j < char_count; j++) {
+                    putchar(*(start + j));
+                }
+                printf(" (%d)\n", char_count);
+            }
+            break;
+        }
+
         //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
         //       the case statement options
         default:
@@ -105,6 +194,7 @@ int main(int argc, char *argv[]){
 
     //TODO:  #6 Dont forget to free your buffer before exiting
     print_buff(buff,BUFFER_SZ);
+    free(buff);
     exit(0);
 }
 
