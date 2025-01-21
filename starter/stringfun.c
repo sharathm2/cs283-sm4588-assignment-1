@@ -10,40 +10,39 @@ void usage(char *);
 void print_buff(char *, int);
 int  setup_buff(char *, char *, int);
 
-//prototypes for functions to handle required functionality
 int  count_words(char *, int, int);
-//add additional prototypes here
 
 
-int setup_buff(char *buff, char *user_str, int len){
-    char *src = user_str;
-    char *dst = buff;
-    int user_str_len = 0;
-    int space_added = 0;
+int setup_buff(char *buff, char *user_str, int len) {
+    int i = 0;          
+    int j = 0;         
+    int last_was_space = 1; 
 
-    while (*src != '\0' && user_str_len < len) {
-        if (*src != ' ' && *src != '\t') {
-            *dst++ = *src;
-            user_str_len++;
-            space_added = 0;
-        } else if (!space_added) {
-            *dst++ = ' ';
-            user_str_len++;
-            space_added = 1;
+    while (user_str[i] != '\0') {
+        i++;
+        if (i > len) return -1;
+    }
+    
+    i = 0; 
+    
+    while (user_str[i] != '\0') {
+        if (user_str[i] == ' ' || user_str[i] == '\t') {
+            if (!last_was_space) {
+                buff[j++] = ' ';
+                last_was_space = 1;
+            }
+        } else {
+            buff[j++] = user_str[i];
+            last_was_space = 0;
         }
-        src++;
+        i++;
     }
-
-    if (*src != '\0') {
-        return -1; // User supplied string is too large
+    
+    while (j < len) {
+        buff[j++] = '.';
     }
-
-    while (user_str_len < len) {
-        *dst++ = '.';
-        user_str_len++;
-    }
-
-    return user_str_len;
+    
+    return i;
 }
 
 void print_buff(char *buff, int len){
@@ -89,6 +88,12 @@ int main(int argc, char *argv[]){
 
     //TODO:  #1. WHY IS THIS SAFE, aka what if arv[1] does not exist?
     //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    
+    /* This check is safe because the condition argc < 2 is evaluated first
+    Once this check is done, if argc < 2, then the second condition will not be evaluated
+    This prevents any illegal memory access of argv[1]
+    */
+
     if ((argc < 2) || (*argv[1] != '-')){
         usage(argv[0]);
         exit(1);
@@ -106,6 +111,12 @@ int main(int argc, char *argv[]){
 
     //TODO:  #2 Document the purpose of the if statement below
     //      PLACE A COMMENT BLOCK HERE EXPLAINING
+    
+    /* This if statement is to make sure that there are enough commands
+    in order to run the program. If there are not enough commands, then the program will exit
+    with a return code of 1.
+    */
+    
     if (argc < 3){
         usage(argv[0]);
         exit(1);
@@ -139,51 +150,54 @@ int main(int argc, char *argv[]){
             printf("Word Count: %d\n", rc);
             break;
 
-        case 'r': {
-            char *start = buff;
-            char *end = buff + user_str_len - 1;
-            while (start < end) {
-                char temp = *start;
-                *start++ = *end;
-                *end-- = temp;
+        case 'r':
+            {
+                // Reverse the string
+                char temp;
+                for (int i = 0; i < user_str_len / 2; i++) {
+                    temp = buff[i];
+                    buff[i] = buff[user_str_len - 1 - i];
+                    buff[user_str_len - 1 - i] = temp;
+                }
+                printf("Reversed String: ");
+                for (int i = 0; i < user_str_len; i++) {
+                    putchar(buff[i]);
+                }
+                printf("\n");
             }
-            printf("Reversed String: ");
-            for (int i = 0; i < user_str_len; i++) {
-                putchar(*(buff + i));
-            }
-            putchar('\n');
             break;
-        }
 
-        case 'w': {
-            printf("Word Print\n----------\n");
-            int word_index = 1;
-            int char_count = 0;
-            char *start = buff;
-
-            for (int i = 0; i < user_str_len; i++) {
-                if (*(buff + i) != ' ') {
-                    char_count++;
-                } else if (char_count > 0) {
-                    printf("%d. ", word_index++);
-                    for (int j = 0; j < char_count; j++) {
-                        putchar(*(start + j));
+        case 'w':
+            {
+                int word_count = 0;
+                int char_count = 0;
+                int in_word = 0;
+                
+                printf("Word Print\n----------\n");
+                
+                for (int i = 0; i < user_str_len; i++) {
+                    if (buff[i] != ' ') {
+                        if (!in_word) {
+                            word_count++;
+                            if (word_count > 1) {
+                                printf(" (%d)\n", char_count);
+                            }
+                            printf("%d. ", word_count);
+                            char_count = 0;
+                            in_word = 1;
+                        }
+                        putchar(buff[i]);
+                        char_count++;
+                    } else {
+                        in_word = 0;
                     }
+                }
+                if (char_count > 0) {
                     printf(" (%d)\n", char_count);
-                    char_count = 0;
-                    start = buff + i + 1;
                 }
-            }
-
-            if (char_count > 0) {
-                printf("%d. ", word_index++);
-                for (int j = 0; j < char_count; j++) {
-                    putchar(*(start + j));
-                }
-                printf(" (%d)\n", char_count);
+                printf("\nNumber of words: %d\n", word_count);
             }
             break;
-        }
 
         //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
         //       the case statement options
@@ -204,4 +218,9 @@ int main(int argc, char *argv[]){
 //          is a good practice, after all we know from main() that 
 //          the buff variable will have exactly 50 bytes?
 //  
-//          PLACE YOUR ANSWER HERE
+/*      I think that providing both the pointer and the length
+        is a good practice because it allows the function to be more flexible.
+    It also allows the function to be more efficient because it does not need to
+    calculate the length of the buffer. Since we know the length of the buffer,
+    the function can work more efficiently knowing the length of the buffer
+*/
