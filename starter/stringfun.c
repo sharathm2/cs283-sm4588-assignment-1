@@ -14,37 +14,51 @@ int  count_words(char *, int, int);
 
 
 int setup_buff(char *buff, char *user_str, int len) {
-    int i = 0;          
-    int j = 0;         
+    int i = 0; //String index         
+    int j = 0; //Buffer index        
     int last_was_space = 1; 
-
-    while (user_str[i] != '\0') {
+    char *p = user_str;
+    char *b = buff;
+    
+    // Check length
+    while (*p != '\0') {
         i++;
         if (i > len) return -1;
+        p++;
     }
     
-    i = 0; 
+    p = user_str; // Reset pointer
     
-    while (user_str[i] != '\0') {
-        if (user_str[i] == ' ' || user_str[i] == '\t') {
+    // Process string
+    while (*p != '\0') {
+        if (*p == ' ' || *p == '\t') {
             if (!last_was_space) {
-                buff[j++] = ' ';
+                *b = ' ';
+                b++;
+                j++;
                 last_was_space = 1;
             }
         } else {
-            buff[j++] = user_str[i];
+            *b = *p;
+            b++;
+            j++;
             last_was_space = 0;
         }
+        p++;
         i++;
     }
     
+    // Fill with dots
     while (j < len) {
-        buff[j++] = '.';
+        *b = '.';
+        b++;
+        j++;
     }
     
     return i;
 }
 
+//print buffer
 void print_buff(char *buff, int len){
     printf("Buffer:  ");
     for (int i=0; i<len; i++){
@@ -150,18 +164,27 @@ int main(int argc, char *argv[]){
             printf("Word Count: %d\n", rc);
             break;
 
+
+        //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
+        //       the case statement options
         case 'r':
             {
-                // Reverse the string
+                //Reverse the string
                 char temp;
-                for (int i = 0; i < user_str_len / 2; i++) {
-                    temp = buff[i];
-                    buff[i] = buff[user_str_len - 1 - i];
-                    buff[user_str_len - 1 - i] = temp;
+                char *start = buff;
+                char *end = buff + user_str_len - 1;
+                
+                while (start < end) {
+                    temp = *start;
+                    *start = *end;
+                    *end = temp;
+                    start++;
+                    end--;
                 }
+                
                 printf("Reversed String: ");
                 for (int i = 0; i < user_str_len; i++) {
-                    putchar(buff[i]);
+                    putchar(*(buff + i));
                 }
                 printf("\n");
             }
@@ -169,14 +192,16 @@ int main(int argc, char *argv[]){
 
         case 'w':
             {
+                //Print word count of string
                 int word_count = 0;
                 int char_count = 0;
                 int in_word = 0;
+                char *p = buff;
                 
                 printf("Word Print\n----------\n");
                 
-                for (int i = 0; i < user_str_len; i++) {
-                    if (buff[i] != ' ') {
+                for (int i = 0; i < user_str_len; i++, p++) {
+                    if (*p != ' ') {
                         if (!in_word) {
                             word_count++;
                             if (word_count > 1) {
@@ -186,7 +211,7 @@ int main(int argc, char *argv[]){
                             char_count = 0;
                             in_word = 1;
                         }
-                        putchar(buff[i]);
+                        putchar(*p);
                         char_count++;
                     } else {
                         in_word = 0;
@@ -198,9 +223,6 @@ int main(int argc, char *argv[]){
                 printf("\nNumber of words: %d\n", word_count);
             }
             break;
-
-        //TODO:  #5 Implement the other cases for 'r' and 'w' by extending
-        //       the case statement options
         default:
             usage(argv[0]);
             exit(1);
